@@ -12,6 +12,6 @@ Al subir un cambio a la rama `main`, GitHub Actions ejecuta estos pasos:
 
 ## Entrega
 
-- [Documento del caso de estudio](Manejo-de-Scripts.docx)
+- [Documento del caso de estudio](tarea1.docx)
 - [Aplicación publicada](https://yilinroux.github.io/Manejode-scrip/)
 - [Ejecuciones del pipeline](https://github.com/YilinRoux/Manejode-scrip/actions)
