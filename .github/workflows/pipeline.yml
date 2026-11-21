@@ -1,0 +1,55 @@
+name: Liberación y despliegue
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  liberar:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: bash scripts/preparar_entorno.sh
+      - run: bash scripts/ejecutar_pruebas.sh
+      - run: bash scripts/desplegar.sh
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  desplegar:
+    needs: liberar
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.publicar.outputs.page_url }}
+    steps:
+      - id: publicar
+        uses: actions/deploy-pages@v4
+      - name: Verificar versión publicada
+        env:
+          PAGE_URL: ${{ steps.publicar.outputs.page_url }}
+        run: |
+          url="${PAGE_URL%/}"
+          for intento in {1..12}; do
+            if version=$(curl -fsS --max-time 10 "$url/version.txt?sha=$GITHUB_SHA") &&
+               [[ "$version" == "$GITHUB_SHA" ]] &&
+               contenido=$(curl -fsS --max-time 10 "$url/?sha=$GITHUB_SHA") &&
+               [[ "$contenido" == *'<h1>Lista de tareas</h1>'* ]]; then
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1
